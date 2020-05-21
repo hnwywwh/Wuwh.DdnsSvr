@@ -16,29 +16,29 @@
 /system scripts
 添加脚本：
 
-#ddns更新接口地址，是否延时根据实际情况定义
-#:delay 10s 
-:local url "http://192.168.1.100:20088"
+    #ddns更新接口地址，是否延时根据实际情况定义
+    #:delay 10s 
+    :local url "http://192.168.1.100:20088"
 
-:local AccessKeyID "xxxxxxxxxx"
+    :local AccessKeyID "xxxxxxxxxx"
 
-:local AccessKeySecret "xxxxxxxxxxxxx"
+    :local AccessKeySecret "xxxxxxxxxxxxx"
 
-#需要更新的域名,域名必须在阿里云上,如果是根域名请指定@  ，如china.cn的根域名为：@.china.com
-:local name "*.china.cn"
+    #需要更新的域名,域名必须在阿里云上,如果是根域名请指定@  ，如china.cn的根域名为：@.china.com
+    :local name "*.china.cn"
 
-#更新域名IP的接口
-:local Interface "pppoe-out1"
+    #更新域名IP的接口
+    :local Interface "pppoe-out1"
 
-#########以下脚本代码, 不懂ros脚本,请不要随意修改#######################
-:local localip
+    #########以下脚本代码, 不懂ros脚本,请不要随意修改#######################
+    :local localip
 
-:foreach i in=[/ip address find interface=$Interface ] do={
+    :foreach i in=[/ip address find interface=$Interface ] do={
 
-:set localip [/ip address get $i address ]}
+    :set localip [/ip address get $i address ]}
 
-:set localip [:pick $localip 0 [find $localip /]]
+    :set localip [:pick $localip 0 [find $localip /]]
 
-/tool fetch url=($url ."/api/AliDns/UpdateIp/\?&domain=$name&accessKeyId=$AccessKeyID&secret=$AccessKeySecret&ip=$localip" ) keep-result=no
+    /tool fetch url=($url ."/api/AliDns/UpdateIp/\?&domain=$name&accessKeyId=$AccessKeyID&secret=$AccessKeySecret&ip=$localip" ) keep-result=no
 
-:log info "aliyun ddns更新$Interface成功:ip=$localip"
+    :log info "aliyun ddns更新$Interface成功:ip=$localip"
