@@ -20,7 +20,7 @@ namespace wuwh.DdnsSvr.Controllers
             try
             {
                 var index = domain.IndexOf('.');
-                if (index < 1) return BadRequest("域名格式错误");
+                if (index < 1) return BadRequest("Domain name format error");
                 var subDomainName = domain.Substring(0, index);
                 var domainName = domain.Substring(index + 1, domain.Length - index - 1);
                 DefaultAcsClient client = new DefaultAcsClient(ConfigValue.GetClientProfile(accessKeyId, secret));
@@ -30,9 +30,9 @@ namespace wuwh.DdnsSvr.Controllers
                 if (response.TotalCount > 0)
                 {
                     var subDomainRecordList = response.DomainRecords.Where(t => t.RR == subDomainName);
-                    if (subDomainRecordList.Count() < 1) return BadRequest("子域名不存在");
+                    if (subDomainRecordList.Count() < 1) return BadRequest("Subdomain does not exist");
                     var subDomainRecord = subDomainRecordList.First();
-                    if (subDomainRecord._Value == ip) return new JsonResult(new { status = "success", msg = "IP未发生变动，无需更新" });
+                    if (subDomainRecord._Value == ip) return new JsonResult(new { status = "success", msg = "No change in IP, no need to update" });
                     UpdateDomainRecordRequest upRequest = new UpdateDomainRecordRequest();
                     upRequest.RR = subDomainName;
                     upRequest.RecordId = subDomainRecord.RecordId;
@@ -40,13 +40,49 @@ namespace wuwh.DdnsSvr.Controllers
                     upRequest._Value = ip;
                     UpdateDomainRecordResponse upRes = await Task.Run(() => client.GetAcsResponse(upRequest));
 
-                    return new JsonResult(new { status = "success", msg = $"IP更新成功，ID为：{upRes.RequestId}" });
+                    return new JsonResult(new { status = "success", msg = $"IP update successful，Request ID is：{upRes.RequestId}" });
                 }
-                return new JsonResult(new { status = "fail", msg = "未获取到域名解析列表" });
+                return new JsonResult(new { status = "fail", msg = "No domain name resolution list obtained" });
             }
             catch (Exception ex)
             {
                 return new JsonResult(new { status = "fail", msg = ex.Message});
+            }
+        }
+
+        [HttpGet("UpdateIpStr")]
+        public async Task<string> UpdateIpStr(string domain, string accessKeyId, string secret, string ip)
+        {
+            try
+            {
+                var index = domain.IndexOf('.');
+                if (index < 1) return "status=fail;msg=Domain name format error";
+                var subDomainName = domain.Substring(0, index);
+                var domainName = domain.Substring(index + 1, domain.Length - index - 1);
+                DefaultAcsClient client = new DefaultAcsClient(ConfigValue.GetClientProfile(accessKeyId, secret));
+                DescribeDomainRecordsRequest request = new DescribeDomainRecordsRequest();
+                request.DomainName = domainName;
+                DescribeDomainRecordsResponse response = await Task.Run(() => client.GetAcsResponse(request));
+                if (response.TotalCount > 0)
+                {
+                    var subDomainRecordList = response.DomainRecords.Where(t => t.RR == subDomainName);
+                    if (subDomainRecordList.Count() < 1) return "status=fail;msg=Subdomain does not exist"; 
+                    var subDomainRecord = subDomainRecordList.First();
+                    if (subDomainRecord._Value == ip) return "status=success;msg=No change in IP, no need to update";
+                    UpdateDomainRecordRequest upRequest = new UpdateDomainRecordRequest();
+                    upRequest.RR = subDomainName;
+                    upRequest.RecordId = subDomainRecord.RecordId;
+                    upRequest.Type = "A";
+                    upRequest._Value = ip;
+                    UpdateDomainRecordResponse upRes = await Task.Run(() => client.GetAcsResponse(upRequest));
+
+                    return $"status=success;msg=IP update successful，Request ID is：{upRes.RequestId}" ;
+                }
+                return "status=fail; msg=No domain name resolution list obtained";
+            }
+            catch (Exception ex)
+            {
+                return  $"status=fail; msg={ex.Message}";
             }
         }
     }
