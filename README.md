@@ -12,6 +12,9 @@
 
     目前只支持子域名更新，若更新根域名，请使用@.xxxx.com
 
+    api/AliDns/UpdateIp ：返回JSON消息 （例：{"status":"success","msg":"No change in IP, no need to update"}）
+    api/AliDns/UpdateIpStr : 返回文本消息（例：status=success;msg=No change in IP, no need to update ）
+
 以ROS为例：
 /system scripts
 添加脚本：
@@ -39,6 +42,8 @@
 
     :set localip [:pick $localip 0 [find $localip /]]
 
-    /tool fetch url=($url ."/api/AliDns/UpdateIp/\?&domain=$name&accessKeyId=$AccessKeyID&secret=$AccessKeySecret&ip=$localip" ) keep-result=no
+    local result [/tool fetch url=($url ."/api/AliDns/UpdateIp/\?&domain=$name&accessKeyId=$AccessKeyID&secret=$AccessKeySecret&ip=$localip" ) as-value output=user];
 
-    :log info "aliyun ddns更新$Interface成功:ip=$localip"
+    :local resValue ($result->"data");
+
+    :log info "aliyun ddns更新$Interface的ip为$localip ,返回结果为：$resValue"
